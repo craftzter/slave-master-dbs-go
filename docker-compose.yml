@@ -1,0 +1,84 @@
+version: "3.9"
+
+x-postgres-common: &postgres-common
+  image: postgres:16
+  user: postgres
+  restart: always
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U postgres -d mydb"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+  networks:
+    - dbnet
+
+services:
+  # Primary Database
+  db-primary:
+    <<: *postgres-common
+    container_name: db-primary
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: mydb
+    command: |
+      postgres
+      -c wal_level=replica
+      -c hot_standby=on
+      -c max_wal_senders=5
+      -c max_replication_slots=5
+      -c hot_standby_feedback=on
+      -c listen_addresses='*'
+    volumes:
+      - primary-data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+
+  # Replica Database
+  db-replica:
+    <<: *postgres-common
+    container_name: db-replica
+    ports:
+      - "5433:5432"
+    environment:
+      PGUSER: replicator
+      PGPASSWORD: replsecret
+    depends_on:
+      - db-primary
+    command: |
+      bash -c "
+      until pg_basebackup -h db-primary -D /var/lib/postgresql/data -U replicator -Fp -Xs -P -R --slot=replica_slot
+      do
+        echo 'Waiting for primary to connect...'
+        sleep 2
+      done
+      echo 'Base backup done, starting replica...'
+      chmod 0700 /var/lib/postgresql/data
+      exec postgres
+      "
+    volumes:
+      - replica-data:/var/lib/postgresql/data
+
+  # Go Application
+  app:
+    build: .
+    container_name: go-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      db-primary:
+        condition: service_healthy
+      db-replica:
+        condition: service_started
+    networks:
+      - dbnet
+    env_file:
+      - .env
+
+volumes:
+  primary-data:
+  replica-data:
+
+networks:
+  dbnet:

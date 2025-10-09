@@ -1,0 +1,12 @@
+-- +migrate Up
+CREATE TABLE profiles (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    bio TEXT NOT NULL DEFAULT '',
+    avatar_url VARCHAR(255) NOT NULL DEFAULT '',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- +migrate Down
+DROP TABLE profiles;

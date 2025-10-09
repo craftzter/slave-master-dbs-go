@@ -1,0 +1,23 @@
+flowchart TD
+    A[Client API] --> B[Gin Router]
+    B --> C[Auth Handler]
+    B --> D[Profile Handler]
+    B --> E[Post Handler]
+
+    C --> F[Auth Usecase]
+    D --> G[Profile Usecase]
+    E --> H[Post Usecase]
+
+    F --> I[User Repository]
+    G --> J[Profile Repository]
+    H --> K[Post Repository]
+
+    I --> L[Master DB - Write]
+    I --> M[Slave DB - Read]
+    J --> L
+    J --> M
+    K --> L
+    K --> M
+
+    L --> N[Replication]
+    N --> M

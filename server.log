@@ -1,0 +1,26 @@
+2025/10/06 15:52:07 Env loaded successfully
+2025/10/06 15:52:07 Postgresql master connected successfully
+2025/10/06 15:52:07 Postgresql slave connected successfully
+2025/10/06 15:52:07 PGSQL master and slave connected
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] POST   /register                 --> learn-api/internal/delivery/http/handler.(*AuthHandler).Register-fm (3 handlers)
+[GIN-debug] POST   /login                    --> learn-api/internal/delivery/http/handler.(*AuthHandler).Login-fm (3 handlers)
+[GIN-debug] POST   /profile                  --> learn-api/internal/delivery/http/handler.(*ProfileHandler).CreateProfile-fm (3 handlers)
+[GIN-debug] GET    /profile/:userID          --> learn-api/internal/delivery/http/handler.(*ProfileHandler).GetProfile-fm (3 handlers)
+[GIN-debug] PUT    /profile                  --> learn-api/internal/delivery/http/handler.(*ProfileHandler).UpdateProfile-fm (3 handlers)
+[GIN-debug] POST   /posts                    --> learn-api/internal/delivery/http/handler.(*PostHandler).CreatePost-fm (4 handlers)
+[GIN-debug] PUT    /posts/:id                --> learn-api/internal/delivery/http/handler.(*PostHandler).UpdatePost-fm (4 handlers)
+[GIN-debug] DELETE /posts/:id                --> learn-api/internal/delivery/http/handler.(*PostHandler).DeletePost-fm (4 handlers)
+[GIN-debug] GET    /posts                    --> learn-api/internal/delivery/http/handler.(*PostHandler).GetAllPosts-fm (3 handlers)
+[GIN-debug] GET    /posts/:id                --> learn-api/internal/delivery/http/handler.(*PostHandler).GetPostByID-fm (3 handlers)
+[GIN-debug] GET    /uploads/*filepath        --> github.com/gin-gonic/gin.(*RouterGroup).createStaticHandler.func1 (3 handlers)
+[GIN-debug] HEAD   /uploads/*filepath        --> github.com/gin-gonic/gin.(*RouterGroup).createStaticHandler.func1 (3 handlers)
+2025/10/06 15:52:07 server running at: 8081
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on :8081

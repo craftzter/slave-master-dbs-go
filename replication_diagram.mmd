@@ -1,0 +1,18 @@
+sequenceDiagram
+    participant Client
+    participant API
+    participant Master
+    participant Slave
+
+    Client->>API: Write Request (e.g., Create Post)
+    API->>Master: Execute Write Query
+    Master-->>API: Success
+    API-->>Client: Response
+
+    Master->>Slave: Stream WAL Logs
+    Slave->>Slave: Apply Changes (Replication)
+
+    Client->>API: Read Request (e.g., Get Posts)
+    API->>Slave: Execute Read Query
+    Slave-->>API: Data
+    API-->>Client: Response

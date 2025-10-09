@@ -1,0 +1,11 @@
+flowchart TD
+    A[API Client] -->|Write: CREATE/UPDATE/DELETE| B[Master Database]
+    A -->|Read: SELECT| C[Slave Database]
+    B -->|Replication WAL Streaming| C
+    B -->|Health Check| B
+    C -->|Read-Only| C
+
+    subgraph "PostgreSQL Setup"
+        B
+        C
+    end

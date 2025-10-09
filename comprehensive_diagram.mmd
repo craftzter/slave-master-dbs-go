@@ -1,0 +1,99 @@
+erDiagram
+    users ||--o{ profiles : "has"
+    users ||--o{ posts : "creates"
+    users ||--o{ comments : "writes"
+    users ||--o{ notifications : "receives"
+    posts ||--o{ comments : "has"
+
+    users {
+        int id PK
+        text username
+        text email
+        text password
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    profiles {
+        int id PK
+        int user_id FK
+        text bio
+        varchar avatar_url
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    posts {
+        int id PK
+        int user_id FK
+        varchar title
+        text content
+        varchar image
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    comments {
+        int id PK
+        int post_id FK
+        int user_id FK
+        text content
+        timestamp created_at
+    }
+
+    notifications {
+        int id PK
+        int user_id FK
+        varchar type
+        text message
+        int related_id
+        boolean is_read
+        timestamp created_at
+    }
+
+---
+
+flowchart TD
+    A[Client API] --> B[Gin Router]
+    B --> C[Auth Handler]
+    B --> D[Profile Handler]
+    B --> E[Post Handler]
+
+    C --> F[Auth Usecase]
+    D --> G[Profile Usecase]
+    E --> H[Post Usecase]
+
+    F --> I[User Repository]
+    G --> J[Profile Repository]
+    H --> K[Post Repository]
+
+    I --> L[Master DB - Write]
+    I --> M[Slave DB - Read]
+    J --> L
+    J --> M
+    K --> L
+    K --> M
+
+    L --> N[Replication]
+    N --> M
+
+---
+
+sequenceDiagram
+    participant Client
+    participant API
+    participant Master
+    participant Slave
+
+    Client->>API: Write Request (e.g., Create Post)
+    API->>Master: Execute Write Query
+    Master-->>API: Success
+    API-->>Client: Response
+
+    Master->>Slave: Stream WAL Logs
+    Slave->>Slave: Apply Changes (Replication)
+
+    Client->>API: Read Request (e.g., Get Posts)
+    API->>Slave: Execute Read Query
+    Slave-->>API: Data
+    API-->>Client: Response
