@@ -3,8 +3,9 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
-	"strings"
+	"time"
 
 	"learn-api/internal/delivery/http/middleware"
 	"learn-api/internal/entity"
@@ -61,14 +62,32 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 	if len(files) > 0 {
 		file := files[0]
 		// Validate file type
-		if !strings.HasSuffix(file.Filename, ".jpg") && !strings.HasSuffix(file.Filename, ".png") && !strings.HasSuffix(file.Filename, ".jpeg") {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid image format"})
+		fileHeader, err := file.Open()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read file"})
+			return
+		}
+		defer fileHeader.Close()
+		buff := make([]byte, 512)
+		_, err = fileHeader.Read(buff)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read content"})
+			return
+		}
+
+		mimeType := http.DetectContentType(buff)
+		if mimeType != "image/jpeg" && mimeType != "image/png" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "only JPEG, PNG and JPG are allowed"})
+			return
+		}
+		if file.Size > 5*1024*1024 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "file exceeds 5MB"})
 			return
 		}
 		// Save file
-		filename := fmt.Sprintf("%d_%s", userID, file.Filename)
+		filename := fmt.Sprintf("%d_%d_%s", userID, time.Now().Unix(), filepath.Base(file.Filename))
 		imagePath = "/uploads/" + filename
-		if err := c.SaveUploadedFile(file, "uploads/"+filename); err != nil {
+		if err = c.SaveUploadedFile(file, "uploads/"+filename); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save image"})
 			return
 		}
@@ -99,8 +118,16 @@ func (h *PostHandler) GetAllPosts(c *gin.Context) {
 }
 
 func (h *PostHandler) GetPostByID(c *gin.Context) {
-	userIDVal, _ := c.Get("userID")
-	userID := userIDVal.(uint)
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+	userID, ok := userIDVal.(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user ID type"})
+		return
+	}
 
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -118,8 +145,16 @@ func (h *PostHandler) GetPostByID(c *gin.Context) {
 }
 
 func (h *PostHandler) UpdatePost(c *gin.Context) {
-	userIDVal, _ := c.Get("userID")
-	userID := userIDVal.(uint)
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+	userID, ok := userIDVal.(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user ID type"})
+		return
+	}
 
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -148,17 +183,36 @@ func (h *PostHandler) UpdatePost(c *gin.Context) {
 	if len(files) > 0 {
 		file := files[0]
 		// Validate file type
-		if !strings.HasSuffix(file.Filename, ".jpg") && !strings.HasSuffix(file.Filename, ".png") && !strings.HasSuffix(file.Filename, ".jpeg") {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid image format"})
+		fileHeader, err := file.Open()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read file"})
+			return
+		}
+		defer fileHeader.Close()
+		buff := make([]byte, 512)
+		_, err = fileHeader.Read(buff)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failes to read content"})
+			return
+		}
+
+		mimeType := http.DetectContentType(buff)
+		if mimeType != "image/jpeg" && mimeType != "image/png" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "only JPEG, PNG and JPG are allowed"})
+			return
+		}
+		if file.Size > 5*1024*1024 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "file exceeds 5MB"})
 			return
 		}
 		// Save file
-		filename := fmt.Sprintf("%d_%s", userID, file.Filename)
+		filename := fmt.Sprintf("%d_%d_%s", userID, time.Now().Unix(), filepath.Base(file.Filename))
 		imagePath = "/uploads/" + filename
-		if err := c.SaveUploadedFile(file, "uploads/"+filename); err != nil {
+		if err = c.SaveUploadedFile(file, "uploads/"+filename); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save image"})
 			return
 		}
+
 	}
 
 	params := entity.UpdatePostParams{
@@ -177,8 +231,16 @@ func (h *PostHandler) UpdatePost(c *gin.Context) {
 }
 
 func (h *PostHandler) DeletePost(c *gin.Context) {
-	userIDVal, _ := c.Get("userID")
-	userID := userIDVal.(uint)
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+	userID, ok := userIDVal.(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user ID type"})
+		return
+	}
 
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)

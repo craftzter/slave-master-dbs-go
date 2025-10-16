@@ -3,6 +3,8 @@ package validation
 import (
 	"errors"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
 )
 
 var (
@@ -12,6 +14,16 @@ var (
 	ErrInvalidUser  = errors.New("invalid user ID")
 	ErrPostNotFound = errors.New("post not found")
 )
+
+var validate *validator.Validate
+
+func init() {
+	validate = validator.New()
+}
+
+func ValidateStruct(s interface{}) error {
+	return validate.Struct(s)
+}
 
 func ValidatePostTitle(title string) error {
 	if strings.TrimSpace(title) == "" {

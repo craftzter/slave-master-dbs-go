@@ -5,9 +5,9 @@ import (
 
 	"learn-api/internal/entity"
 	"learn-api/internal/usecase"
+	"learn-api/pkg/validation"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 )
 
 type AuthHandler struct {
@@ -33,8 +33,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(params)
+	err = validation.ValidateStruct(params)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input check all requirement field"})
 		return
@@ -58,8 +57,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(params)
+	err = validation.ValidateStruct(params)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input check all requirement input logins"})
 		return

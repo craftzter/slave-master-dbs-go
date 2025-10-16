@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -24,6 +25,9 @@ func InitMaster() (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to postgres master %w", err)
 	}
+	db.SetMaxOpenConns(25)                 // Max connection pool
+	db.SetMaxIdleConns(5)                  // Connection yang idle
+	db.SetConnMaxLifetime(5 * time.Minute) // Lifetime setiap connection
 	log.Println("Postgresql master connected successfully")
 	return db, nil
 }
@@ -43,6 +47,9 @@ func InitSlave() (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to postgres slave %w", err)
 	}
+	db.SetMaxOpenConns(25)                 // Max connection pool
+	db.SetMaxIdleConns(5)                  // Connection yang idle
+	db.SetConnMaxLifetime(5 * time.Minute) // Lifetime setiap connection
 	log.Println("Postgresql slave connected successfully")
 	return db, nil
 }

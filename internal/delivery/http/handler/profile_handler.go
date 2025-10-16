@@ -4,11 +4,12 @@ import (
 	"net/http"
 	"strconv"
 
+	"learn-api/internal/delivery/http/middleware"
 	"learn-api/internal/entity"
 	"learn-api/internal/usecase"
+	"learn-api/pkg/validation"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 )
 
 type ProfileHandler struct {
@@ -20,22 +21,40 @@ func NewProfileHandler(uc usecase.ProfileUsecase) *ProfileHandler {
 }
 
 func (h *ProfileHandler) RegisterRoutes(r *gin.Engine) {
-	r.POST("/profile", h.CreateProfile)
-	r.GET("/profile/:userID", h.GetProfile)
-	r.PUT("/profile", h.UpdateProfile)
+	profile := r.Group("/profile")
+	profile.Use(middleware.AuthMiddleware())
+	{
+		profile.POST("", h.CreateProfile)
+		profile.PUT("", h.UpdateProfile)
+	}
+
+	// public endpoint
+	r.GET("profile/:userID", h.GetProfile)
+	// r.POST("/profile", h.CreateProfile)
+	// r.GET("/profile/:userID", h.GetProfile)
+	// r.PUT("/profile", h.UpdateProfile)
 }
 
 func (h *ProfileHandler) CreateProfile(c *gin.Context) {
+	userIDVal, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user id"})
+		return
+	}
+	userID, ok := userIDVal.(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user id type"})
+		return
+	}
 	var params entity.CreateProfileParams
-
+	params.UserID = int32(userID)
 	err := c.ShouldBindBodyWithJSON(&params)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input"})
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(params)
+	err = validation.ValidateStruct(params)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input"})
 		return
@@ -66,16 +85,25 @@ func (h *ProfileHandler) GetProfile(c *gin.Context) {
 }
 
 func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
-	var params entity.UpdateProfileParams
+	userIDVal, exist := c.Get("UserID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid userID"})
+		return
+	}
+	userID, ok := userIDVal.(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user id type"})
+		return
+	}
 
+	var params entity.UpdateProfileParams
+	params.UserID = int32(userID)
 	err := c.ShouldBindBodyWithJSON(&params)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input"})
 		return
 	}
-
-	validate := validator.New()
-	err = validate.Struct(params)
+	err = validation.ValidateStruct(params)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input"})
 		return
